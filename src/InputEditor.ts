@@ -1,6 +1,4 @@
 import {
-    DEFAULT_COLUMN_WIDTH,
-    DEFAULT_ROW_HEIGHT,
     HEADER_COLUMN_WIDTH,
     HEADER_ROW_HEIGHT
 } from "./Constants.js";
@@ -12,6 +10,7 @@ export class InputEditor {
     private _cellStore:CellStore;
     private columnPositions:number[];
     private rowPositions:number[];
+
     constructor(
         input: HTMLInputElement,
          store: CellStore,
@@ -31,18 +30,17 @@ export class InputEditor {
     scrollY: number,
     canvas: HTMLCanvasElement
 ) {
-    const rect =
-        canvas.getBoundingClientRect();
-
+    if(row==-1 || col==-1) return;
+    const rect = canvas.getBoundingClientRect();
     const localX =this.columnPositions[col] as number  - scrollX;
     const localY =this.rowPositions[row] as number - scrollY;
     const width=this.columnPositions[col+1]!-this.columnPositions[col]!
     const height=this.rowPositions[row+1]!-this.rowPositions[row]!
 
     const isOutsideViewport =
-        localX + DEFAULT_COLUMN_WIDTH < HEADER_COLUMN_WIDTH ||
+        localX  < HEADER_COLUMN_WIDTH ||
         localX > rect.width ||
-        localY + DEFAULT_ROW_HEIGHT < HEADER_ROW_HEIGHT ||
+        localY  < HEADER_ROW_HEIGHT ||
         localY > rect.height;
 
     if (isOutsideViewport) {
@@ -57,6 +55,8 @@ export class InputEditor {
 
     this._input.style.top =
         `${rect.top + localY}px`;
+    
+    
 
     this._input.style.width =
         `${width}px`;

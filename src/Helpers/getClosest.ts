@@ -1,11 +1,11 @@
 export const getClosest = (
-    target: number,
+    target: number, 
     arr: number[]
 ): number => {
 
     let left = 0;
     let right = arr.length - 1;
-    let answer = 0;
+    let answer = -1;
 
     while (left <= right) {
 

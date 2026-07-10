@@ -56,6 +56,7 @@ export class Summary {
     }
 
     getSummary(){
+        
         this.findMax();
         this.findMin();
         this.getSum();

@@ -31,11 +31,12 @@ html, body {
   gap: 20px;
   padding: 10px;
   border-radius: 5px;
-  background-color: #1e293b;
+  background-color: #253b1e;
   color: white;
   font-weight: 600;
   bottom: 10px;
   right: 10px;
+  z-index: 10;
   
 }
 

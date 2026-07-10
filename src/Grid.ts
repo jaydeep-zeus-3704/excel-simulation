@@ -3,6 +3,7 @@ import {
     DEFAULT_ROW_HEIGHT,
     TOTAL_ROWS,
     TOTAL_COLS,
+    HEADER_ROW_HEIGHT,
 } from "./Constants.js";
 
 import { CellStore } from "./Cellstore.js";
@@ -11,16 +12,13 @@ import { InputEditor } from "./InputEditor.js";
 import { getClosest } from "./Helpers/getClosest.js";
 
 export class Grid {
-
     private ctx: CanvasRenderingContext2D;
-
     private scrollX = 0;
     private scrollY = 0;
     private DEFAULT_COLUMN_OFFSET = 100;
     private DEFAULT_ROW_OFFSET = 30;
-    private selectedRow = 0;
-    private selectedCol = 0;
-
+    private selectedRow = -1;
+    private selectedCol = -1;
     private store = new CellStore();
     private columnPos: number[] = [];
     private rowPos: number[] = [];
@@ -30,7 +28,6 @@ export class Grid {
     private resizingRow: number = -1;
     private selectedCell:number[]=[-1,-1,-1,-1];
     private selecting:boolean=false;
-
     private resizeState = {
         startX: 0,
         startY: 0,
@@ -89,11 +86,12 @@ export class Grid {
             this.scrollY,
             this.rowPos,
             this.columnPos,
+            this.selectedCell
         );
+        this.renderer.drawHeaderSelection(this.scrollX,this.scrollY,this.selectedCell,this.columnPos,this.rowPos)
     }
 
     private attachEvents() {
-        this.canvas.addEventListener("click", this.onClick);
         this.canvas.addEventListener("wheel", this.onWheel, { passive: false });
         window.addEventListener("resize", () => this.setupCanvas());
         this.canvas.addEventListener("mousedown", this.onMouseDown);
@@ -101,23 +99,7 @@ export class Grid {
         window.addEventListener("mouseup", this.onMouseUp);
     }
 
-    private onClick = (e: MouseEvent) => {
-        if (this.resizingColumn !== -1 || this.resizingRow !== -1) return;
-        this.editor.saveData(this.selectedRow, this.selectedCol);
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        this.selectedCol = getClosest(x + this.scrollX, this.columnPos);
-        this.selectedRow = getClosest(y + this.scrollY, this.rowPos);
-        this.editor.show(
-            this.selectedRow,
-            this.selectedCol,
-            this.scrollX,
-            this.scrollY,
-            this.canvas
-        );
-        this.render();
-    };
+    
 
     private onWheel = (e: WheelEvent) => {
         e.preventDefault();
@@ -155,7 +137,11 @@ export class Grid {
             this.resizeState.initialSize = this.rowPos[closestRow + 1]! - this.rowPos[closestRow]!;
         }
         else{
-            this.selectedCell=[closestColumn,closestRow,-1,-1]
+            if(e.clientY < HEADER_ROW_HEIGHT){
+                this.selectedCell=[closestColumn,-1,-1,-1]
+            }
+            else this.selectedCell=[closestColumn,closestRow,-1,-1]
+            console.log(this.selectedCell)
             this.selecting=true;
         }
 
@@ -163,8 +149,6 @@ export class Grid {
     };
 
     private onMouseMove = (e: MouseEvent) => {
-
-        
         const x = e.offsetX + this.scrollX;
         const y = e.offsetY + this.scrollY;
         if (this.resizingColumn !== -1) {
@@ -192,7 +176,6 @@ export class Grid {
             this.selectedCell[2]=closestColumn;
             this.selectedCell[3]=closestRow
             this.render()
-            console.log(this.selectedCell)
         }
         const closestColumn = getClosest(x, this.columnPos);
         const closestRow = getClosest(y, this.rowPos);
@@ -212,6 +195,8 @@ export class Grid {
         this.resizingRow = -1;
         this.resizingColumn = -1;
         this.canvas.style.cursor = "cell";
+        this.render();
+        
         
     };
 
@@ -257,7 +242,4 @@ export class Grid {
             console.error("Failed to parse and write JSON data to Excel canvas:", error);
         }
     }
-
-
-    
 }
