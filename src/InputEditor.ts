@@ -81,14 +81,12 @@ export class CellSelector {
   
 
     saveData(row:number,col:number){
-        if(this._input.value.trim()==''){
-            this._cellStore.delete(row,col)
-        }
-        else{
+        
+        if(this._input.value.trim()!=""){
             this._cellStore.set(row,col,this._input.value)
             console.log(`Saved row:${row} col:${col} value ${this._input.value}`)
-            this._input.value=""
         }
+        this._input.value=""
     }
 
 

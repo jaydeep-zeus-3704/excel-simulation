@@ -44,7 +44,6 @@ export class Grid {
         this.writeJsonToExcel("../output.json");
         this.setupCanvas();
         this.attachEvents();
-        console.log(this.selectionManager)
     }
 
     private populateColAndRowPos() {
@@ -70,7 +69,6 @@ export class Grid {
     }
 
     private render() {
-        console.log("Render Called")
         this.renderer.drawGrid(
             this.rowPos,
             this.columnPos,
@@ -91,7 +89,7 @@ export class Grid {
             this.columnPos,
             this.selectedCell
         );
-            this.cellSelector.showSelectedCell(this.scrollX,this.scrollY,this.currentClick.row,this.currentClick.col)
+        this.cellSelector.showSelectedCell(this.scrollX,this.scrollY,this.currentClick.row,this.currentClick.col)
         this.selectionManager.drawHeaderSelection(this.scrollX,this.scrollY,this.selectedCell,this.columnPos,this.rowPos)
     }
 
@@ -122,7 +120,10 @@ export class Grid {
 
     private onMouseDown = (e: MouseEvent) => {
         this.selectedCell=[-1,-1,-1,-1]
-        this.cellSelector.saveData(this.currentClick.row-1,this.currentClick.row-1)
+        if (this.currentClick.row !== -1 && this.currentClick.col !== -1) {
+          this.cellSelector.saveData(this.currentClick.row, this.currentClick.col);
+          console.log("Data saved")
+        }
         const x = e.offsetX + this.scrollX;
         const y = e.offsetY + this.scrollY;
         const closestColumn = getClosest(x, this.columnPos);
@@ -135,6 +136,7 @@ export class Grid {
         this.cellSelector.showSelectedCell(this.scrollX,this.scrollY,closestRowClicked,closestColClicked);
         this.cellSelector.showInputBox(-1,-1,this.scrollX,this.scrollY);
         this.currentClick={row:closestRowClicked,col:closestColClicked};
+       
 
         if (closestColumn < TOTAL_COLS && Math.abs(this.columnPos[closestColumn + 1]! - x) <= tolerance) {
             this.resizingColumn = closestColumn;
@@ -154,7 +156,6 @@ export class Grid {
                 this.selectedCell=[closestColumn,-1,-1,-1]
             }
             else this.selectedCell=[closestColumn,closestRow,-1,-1]
-            console.log(this.selectedCell)
             this.selecting=true;
         }
         this.render()

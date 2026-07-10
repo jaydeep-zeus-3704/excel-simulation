@@ -100,7 +100,6 @@ export class CanvasRenderer {
             }
         }
 
-        // Draw regular grid borders
         this.ctx.strokeStyle = "#a5a9b0";
         this.ctx.lineWidth = 1;
         for (let c = startCol; c < endCol; c++) {
@@ -178,7 +177,6 @@ export class CanvasRenderer {
             this.ctx.fillText((i + 1).toString(), DEFAULT_COLUMN_WIDTH / 2, y + height / 2);
         }
 
-        // Top-left intersection corner block (A0 area alignment)
         this.ctx.fillStyle = "#f5f5f5";
         this.ctx.fillRect(0, 0, DEFAULT_COLUMN_WIDTH, DEFAULT_ROW_HEIGHT);
         this.ctx.strokeStyle = "#bcbcbc";
