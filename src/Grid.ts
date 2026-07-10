@@ -8,40 +8,43 @@ import {
 
 import { CellStore } from "./Cellstore.js";
 import { CanvasRenderer } from "./CanvasRenderer.js";
-import { InputEditor } from "./InputEditor.js";
+import { CellSelector } from "./InputEditor.js";
 import { getClosest } from "./Helpers/getClosest.js";
-
+import { SelectionManager } from "./SelectionManager.js";
 export class Grid {
     private ctx: CanvasRenderingContext2D;
     private scrollX = 0;
     private scrollY = 0;
     private DEFAULT_COLUMN_OFFSET = 100;
     private DEFAULT_ROW_OFFSET = 30;
-    private selectedRow = -1;
-    private selectedCol = -1;
     private store = new CellStore();
     private columnPos: number[] = [];
     private rowPos: number[] = [];
     private renderer: CanvasRenderer;
-    private editor: InputEditor;
+    private cellSelector: CellSelector;
     private resizingColumn: number = -1;
     private resizingRow: number = -1;
     private selectedCell:number[]=[-1,-1,-1,-1];
     private selecting:boolean=false;
+    private currentClick:{row:number,col:number}={row:-1,col:-1};
     private resizeState = {
         startX: 0,
         startY: 0,
         initialSize: 0
     };
 
+    private selectionManager:SelectionManager;
+
     constructor(private canvas: HTMLCanvasElement, input: HTMLInputElement) {
         this.ctx = canvas.getContext("2d")!;
         this.renderer = new CanvasRenderer(this.ctx, this.store);
+        this.selectionManager=new SelectionManager(this.ctx)
         this.populateColAndRowPos();
-        this.editor = new InputEditor(input, this.store, this.rowPos, this.columnPos);
+        this.cellSelector = new CellSelector(input, this.store, this.rowPos, this.columnPos,this.canvas);
         this.writeJsonToExcel("../output.json");
         this.setupCanvas();
         this.attachEvents();
+        console.log(this.selectionManager)
     }
 
     private populateColAndRowPos() {
@@ -67,6 +70,7 @@ export class Grid {
     }
 
     private render() {
+        console.log("Render Called")
         this.renderer.drawGrid(
             this.rowPos,
             this.columnPos,
@@ -80,7 +84,6 @@ export class Grid {
             this.rowPos,
             this.columnPos
         );
-        this.editor.show(this.selectedRow, this.selectedCol, this.scrollX, this.scrollY, this.canvas);
         this.renderer.drawHeaders(
             this.scrollX,
             this.scrollY,
@@ -88,7 +91,8 @@ export class Grid {
             this.columnPos,
             this.selectedCell
         );
-        this.renderer.drawHeaderSelection(this.scrollX,this.scrollY,this.selectedCell,this.columnPos,this.rowPos)
+            this.cellSelector.showSelectedCell(this.scrollX,this.scrollY,this.currentClick.row,this.currentClick.col)
+        this.selectionManager.drawHeaderSelection(this.scrollX,this.scrollY,this.selectedCell,this.columnPos,this.rowPos)
     }
 
     private attachEvents() {
@@ -96,7 +100,12 @@ export class Grid {
         window.addEventListener("resize", () => this.setupCanvas());
         this.canvas.addEventListener("mousedown", this.onMouseDown);
         this.canvas.addEventListener("mousemove", this.onMouseMove);
+        this.canvas.addEventListener("dblclick",this.onDblClick)
         window.addEventListener("mouseup", this.onMouseUp);
+    }
+
+    private onDblClick=(e:MouseEvent)=>{
+        this.cellSelector.showInputBox(this.currentClick.row,this.currentClick.col,this.scrollX,this.scrollY);
     }
 
     
@@ -108,20 +117,24 @@ export class Grid {
         const maxScrollY = this.rowPos[this.rowPos.length - 1]! - window.innerHeight;
         this.scrollX = Math.min(maxScrollX, Math.max(0, this.scrollX + e.deltaX));
         this.scrollY = Math.min(maxScrollY, Math.max(0, this.scrollY + e.deltaY));
-        this.editor.show(this.selectedRow, this.selectedCol, this.scrollX, this.scrollY, this.canvas);
         this.render();
     };
 
     private onMouseDown = (e: MouseEvent) => {
         this.selectedCell=[-1,-1,-1,-1]
-
+        this.cellSelector.saveData(this.currentClick.row-1,this.currentClick.row-1)
         const x = e.offsetX + this.scrollX;
         const y = e.offsetY + this.scrollY;
         const closestColumn = getClosest(x, this.columnPos);
         const closestRow = getClosest(y, this.rowPos);
         const tolerance = 6;
-
-        
+        const clickedX=e.clientX
+        const clickedY=e.clientY
+        const closestColClicked=getClosest(clickedX,this.columnPos)
+        const closestRowClicked=getClosest(clickedY,this.rowPos)
+        this.cellSelector.showSelectedCell(this.scrollX,this.scrollY,closestRowClicked,closestColClicked);
+        this.cellSelector.showInputBox(-1,-1,this.scrollX,this.scrollY);
+        this.currentClick={row:closestRowClicked,col:closestColClicked};
 
         if (closestColumn < TOTAL_COLS && Math.abs(this.columnPos[closestColumn + 1]! - x) <= tolerance) {
             this.resizingColumn = closestColumn;
@@ -144,13 +157,14 @@ export class Grid {
             console.log(this.selectedCell)
             this.selecting=true;
         }
+        this.render()
 
-
-    };
+    }
 
     private onMouseMove = (e: MouseEvent) => {
-        const x = e.offsetX + this.scrollX;
-        const y = e.offsetY + this.scrollY;
+        const x = e.clientX + this.scrollX;
+        const y = e.clientY + this.scrollY;
+
         if (this.resizingColumn !== -1) {
             this.canvas.style.cursor = "col-resize";
             const totalMovedX = e.clientX - this.resizeState.startX;

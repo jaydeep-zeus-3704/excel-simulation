@@ -15,6 +15,7 @@ html, body {
 #cell-input{
   position: absolute;
   display: none;
+  color: black;
   border: 2px solid #107c41;
   background-color: #ffffff;
   outline: none;
