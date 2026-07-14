@@ -1,9 +1,12 @@
+import { Formula } from "./Formula.js";
+
 export class CellStore {
     private data = new Map<string, string>();
     
 
     set(row: number, col: number, value: string) {
-        this.data.set(`${row},${col}`, value);
+        const parsedValue= (Formula.evaluate(value)=="#ERROR") ? value: Formula.evaluate(value) 
+        this.data.set(`${row},${col}`, parsedValue);
     }
 
     get(row: number, col: number) {
