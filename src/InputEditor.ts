@@ -44,10 +44,10 @@ export class CellSelector {
         this.ctx.beginPath();
         this.ctx.fillStyle = "#b6d3c3";
         this.ctx.fillRect(x, y, width, height);
+        this.ctx.lineWidth=2
         this.ctx.strokeStyle = "#284314";
         this.ctx.strokeRect(x, y, width, height);
         
-        // Only draw cell text on canvas if the interactive DOM input element isn't currently sitting on top of it
         if (this._input.style.display !== "block" || this._input.style.left !== `${this.canvas.getBoundingClientRect().left + x}px`) {
             this.ctx.fillStyle = "#000000";
             this.ctx.textAlign = "left";

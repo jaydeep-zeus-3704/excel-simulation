@@ -1,11 +1,14 @@
-import { DEFAULT_COLUMN_WIDTH, DEFAULT_ROW_HEIGHT, HEADER_COLUMN_WIDTH, HEADER_ROW_HEIGHT, TOTAL_COLS, TOTAL_ROWS } from "./Constants.js";
+import { DEFAULT_COLUMN_WIDTH, DEFAULT_ROW_HEIGHT} from "./Constants.js";
 import { CellStore } from "./Cellstore.js";
 import { CanvasHelpers } from "./Helpers/CanvasHelpers.js";
 import { getVisibleRowsAndColumns } from "./Helpers/getVisibleRowsAndColumns.js";
 import type { SelectionManager } from "./SelectionManager.js";
 
-export class CanvasRenderer {
 
+
+
+
+export class CanvasRenderer {
     private store: CellStore;    
     constructor(
         private ctx: CanvasRenderingContext2D,
@@ -40,7 +43,6 @@ export class CanvasRenderer {
             }
         }
         this.selectionManager.drawCellSelection(columnPos,rowPos,startRow,endRow,endCol,scrollX,scrollY)
-        
     }
 
     drawCellData(scrollX: number, scrollY: number, rowPos: number[], colPos: number[]) {
@@ -107,6 +109,7 @@ export class CanvasRenderer {
          this.ctx.beginPath()
          this.ctx.fillStyle = fillStyle;
          this.ctx.font = "400 14px sans-serif";
+         this.ctx.textBaseline = "middle"; // <- important
          this.ctx.textAlign = textAlign ? textAlign : "center";
          this.ctx.fillText(value, x, y);
          this.ctx.closePath()

@@ -83,7 +83,7 @@ export class Grid {
         this.canvas.addEventListener("wheel", this.onWheel, { passive: false });
         window.addEventListener("resize", () => this.setupCanvas());
         this.canvas.addEventListener("mousedown", this.onMouseDown);
-        this.canvas.addEventListener("mousemove", this.onMouseMove);
+        window.addEventListener("mousemove", this.onMouseMove);
         this.canvas.addEventListener("dblclick",this.onDblClick)
         window.addEventListener("mouseup", this.onMouseUp);
         document.addEventListener("keydown",this.onKeyDown)
@@ -150,19 +150,44 @@ export class Grid {
 
     }
 
-    private arrowKeyPressed(row:number,col:number){
-        if(this.columnPos[col+1]!+HEADER_COLUMN_WIDTH!>this.canvas.width+this.scrollX){
-            this.scrollX+= HEADER_COLUMN_WIDTH
-        }
-        this.cellSelector.showInputBox(-1,-1,this.scrollX,this.scrollY);
-        this.cellSelector.showSelectedCell(this.scrollX,this.scrollY,row,col);
-        this.selectionManager.selectedState={row1:row,col1:col,row2:-1,col2:-1}
-        this.currentClick={row,col};
-        this.render()
-    } 
+private arrowKeyPressed(row: number, col: number) {
+    const cellLeft = this.columnPos[col]!;
+    const cellRight = this.columnPos[col + 1]!;
 
+    const cellTop = this.rowPos[row]!;
+    const cellBottom = this.rowPos[row + 1]!;
 
+    const viewportWidth = this.canvas.clientWidth;
+    const viewportHeight = this.canvas.clientHeight;
 
+    // Right
+    if (cellRight - this.scrollX > viewportWidth) {
+        this.scrollX = cellRight - viewportWidth;
+    }
+    // Left
+    if (cellLeft < this.scrollX + HEADER_COLUMN_WIDTH) {
+        this.scrollX = Math.max(0, cellLeft - HEADER_COLUMN_WIDTH);
+    }
+    // Down
+    if (cellBottom - this.scrollY > viewportHeight) {
+        this.scrollY = cellBottom - viewportHeight;
+    }
+    // Up
+    if (cellTop < this.scrollY + HEADER_ROW_HEIGHT) {
+        this.scrollY = Math.max(0, cellTop - HEADER_ROW_HEIGHT);
+    }
+
+    this.currentClick = { row, col };
+
+    this.selectionManager.selectedState = {
+        row1: row,
+        col1: col,
+        row2: row,
+        col2: col,
+    };
+
+    this.render();
+}
     private onKeyDown=(e:KeyboardEvent)=>{
         const {row,col}=this.currentClick;
         const controlPressed:boolean=e.ctrlKey;
@@ -170,8 +195,6 @@ export class Grid {
             case "Enter":
                 this.commandManager.executeCommand(new EditCellCommand(row,col,this.cellSelector.getInputValue()!,this.store))
                 this.cellSelector.showInputBox(-1,-1,this.scrollX,this.scrollY);
-                this.cellSelector.showSelectedCell(this.scrollX,this.scrollY,-1,-1);
-                this.currentClick={row:-1,col:-1};
                 this.render()
                 break;
             case "ArrowUp":
@@ -187,12 +210,14 @@ export class Grid {
                 if(col<TOTAL_COLS) this.arrowKeyPressed(row,col+1)
                 break;
              case "z":
-                if(controlPressed) this.commandManager.undo();
-                this.render()
+                if(controlPressed) {
+                this.commandManager.undo();
+                this.render()}
                 break;
              case "y":
-                if(controlPressed) this.commandManager.redo();
+                if(controlPressed){ this.commandManager.redo();
                 this.render()
+                }
                 break;
             default:
                 break;
