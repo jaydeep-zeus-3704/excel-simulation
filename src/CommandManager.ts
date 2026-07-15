@@ -10,9 +10,6 @@ interface ICommand{
 export class CommandManager {
     private undoStack:ICommand[]=[];
     private redoStack:ICommand[]=[];
-
-
-
     public executeCommand(command: ICommand): void {
         command.execute();
         this.undoStack.push(command);
@@ -43,16 +40,12 @@ export class CommandManager {
 
 
 export class EditCellCommand implements ICommand {
-   
     private prevValue:string;
-
- 
     constructor( private row:number,private col:number,private newValue:string,private cellStore:CellStore){
         this.newValue=newValue
         this.prevValue=this.cellStore.get(row,col) 
     }
     execute():void{
-        console.log(this.newValue)
         this.cellStore.set(this.row,this.col,this.newValue)
     }
 
@@ -70,12 +63,11 @@ export class ResizeCommand implements ICommand {
     constructor(
         private pos: number[], 
         private k: number, 
-        private oldSize: number,    // Pass the cached size from before the drag started
-        private resizedSize: number // Pass the final size computed on mouse up
+        private oldSize: number,    
+        private resizedSize: number 
     ) {}
 
     execute(): void {
-        this.applySizeChange(this.resizedSize);
     }
 
     undo(): void {
@@ -83,10 +75,12 @@ export class ResizeCommand implements ICommand {
     }
 
     redo(): void {
-        this.execute();
+        this.applySizeChange(this.resizedSize);
+        
     }
 
     private applySizeChange(targetSize: number): void {
+        if(targetSize<=0) return;
         const currentSize = this.pos[this.k + 1]! - this.pos[this.k]!;
         const diff = targetSize - currentSize;
         if (diff === 0) return;

@@ -24,7 +24,6 @@ export class CellSelector {
     }
 
     private setupInputStyle() {
-        // Essential styles to ensure it overlays cleanly over the canvas cell
         this._input.style.position = "absolute";
         this._input.style.border = "2px solid #284314";
         this._input.style.outline = "none";
