@@ -1,4 +1,4 @@
-import type { CellStore } from "../Cellstore.js";
+import type { CellStore } from "../Store/Cellstore.js";
 
 export class CanvasHelpers{
     public static drawAndStrokeRect(ctx:CanvasRenderingContext2D,fillStyle:string,x:number,y:number,strokeStyle:string,lineWidth:number,width:number,height:number){

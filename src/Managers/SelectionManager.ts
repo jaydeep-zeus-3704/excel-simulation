@@ -1,8 +1,8 @@
-import { HEADER_COLUMN_WIDTH, HEADER_ROW_HEIGHT, TOTAL_COLS, TOTAL_ROWS } from "./Constants.js";
-import { getVisibleRowsAndColumns } from "./Helpers/getVisibleRowsAndColumns.js";
-import { CanvasHelpers } from "./Helpers/CanvasHelpers.js";
-import type { CellStore } from "./Cellstore.js";
-import { Summary } from "./Summary.js";
+import { HEADER_COLUMN_WIDTH, HEADER_ROW_HEIGHT, TOTAL_COLS, TOTAL_ROWS } from "../Constants.js";
+import { getVisibleRowsAndColumns } from "../Helpers/getVisibleRowsAndColumns.js";
+import { CanvasHelpers } from "../Helpers/CanvasHelpers.js";
+import type { CellStore } from "../Store/Cellstore.js";
+import { Summary } from "./SummaryManager.js";
 
 interface ISelectedState{
     row1:number,

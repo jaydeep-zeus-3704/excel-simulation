@@ -1,9 +1,9 @@
 import {
     HEADER_COLUMN_WIDTH,
     HEADER_ROW_HEIGHT
-} from "./Constants.js";
-import { CellStore } from "./Cellstore.js";
-import { Formula } from "./Formula.js";
+} from "../Constants.js";
+import { CellStore } from "../Store/Cellstore.js";
+import { Formula } from "../Formula.js";
 
 export class CellSelector {
     private _input: HTMLInputElement;

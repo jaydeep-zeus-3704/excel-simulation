@@ -1,9 +1,8 @@
-import { DEFAULT_COLUMN_WIDTH, DEFAULT_ROW_HEIGHT} from "./Constants.js";
-import { CellStore } from "./Cellstore.js";
-import { CanvasHelpers } from "./Helpers/CanvasHelpers.js";
-import { getVisibleRowsAndColumns } from "./Helpers/getVisibleRowsAndColumns.js";
-import type { SelectionManager } from "./SelectionManager.js";
-
+import { DEFAULT_COLUMN_WIDTH, DEFAULT_ROW_HEIGHT} from "../Constants.js";
+import { CellStore } from "../Store/Cellstore.js";
+import { CanvasHelpers } from "../Helpers/CanvasHelpers.js";
+import { getVisibleRowsAndColumns } from "../Helpers/getVisibleRowsAndColumns.js";
+import type { SelectionManager } from "../Managers/SelectionManager.js";
 
 
 
@@ -52,7 +51,6 @@ export class CanvasRenderer {
             rowPos,
             colPos
         );
-
         for (let r = startRow; r < endRow; r++) {
             const rowHeight = rowPos[r + 1]! - rowPos[r]!;
             const y = rowPos[r]! - scrollY + rowHeight / 2;

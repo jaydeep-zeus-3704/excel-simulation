@@ -3,52 +3,76 @@ import {
     DEFAULT_ROW_HEIGHT,
     TOTAL_ROWS,
     TOTAL_COLS,
-    HEADER_ROW_HEIGHT,
-    HEADER_COLUMN_WIDTH,
 } from "./Constants.js";
 
-import { CellStore } from "./Cellstore.js";
-import { CanvasRenderer } from "./CanvasRenderer.js";
-import { CellSelector } from "./InputEditor.js";
-import { getClosest } from "./Helpers/getClosest.js";
-import { SelectionManager } from "./SelectionManager.js";
-import { CommandManager,EditCellCommand ,ResizeCommand} from "./CommandManager.js";
+import { CellStore } from "./Store/Cellstore.js";
+import { CanvasRenderer } from "./Managers/CanvasRenderer.js";
+import { CellSelector } from "./Managers/EditManager.js";
+import { SelectionManager } from "./Managers/SelectionManager.js";
+import { CommandManager } from "./Managers/CommandManager.js";
+import { MouseEventListeners } from "./Events/MouseEvents.js";
+import { KeyboardEventListener } from "./Events/KeyBoardEvents.js";
+
+interface IResizeState{
+     startX: number,
+     startY: number,
+     initialSize: number,
+     newWidth: number,
+     newHeight: number,
+}
 
 export class Grid {
-    private ctx: CanvasRenderingContext2D;
-    private scrollX = 0;
-    private scrollY = 0;
-    private store = new CellStore();
-    private columnPos: number[] = [];
-    private rowPos: number[] = [];
-    private renderer: CanvasRenderer;
-    private cellSelector: CellSelector;
-    private resizingColumn: number = -1;
-    private resizingRow: number = -1;
-    private currentClick:{row:number,col:number}={row:-1,col:-1};
-    private resizeState = {
+    // Rendering
+    ctx: CanvasRenderingContext2D;
+    renderer: CanvasRenderer;
+
+    // Scroll position
+    scrollX:number = 0;
+    scrollY:number = 0;
+
+    // Data
+    store = new CellStore();
+    columnPos: number[] = [];
+    rowPos: number[] = [];
+
+    // Input / selection
+    cellSelector: CellSelector;
+    selectionManager: SelectionManager;
+    currentClick: { row: number; col: number } = { row: -1, col: -1 };
+
+    // Resize state
+    resizingColumn: number = -1;
+    resizingRow: number = -1;
+    resizeState:IResizeState = {
         startX: 0,
         startY: 0,
         initialSize: 0,
-        newWidth:0,
-        newHeight:0
+        newWidth: 0,
+        newHeight: 0,
     };
-    private commandManager:CommandManager;
-    private selectionManager:SelectionManager;
 
-    constructor(private canvas: HTMLCanvasElement, input: HTMLInputElement) {
+    // Commands
+    commandManager: CommandManager;
+
+    // Event handlers
+    private mouseEventListeners: MouseEventListeners;
+    private keyboardEventListener: KeyboardEventListener;
+
+    constructor(public canvas: HTMLCanvasElement, input: HTMLInputElement) {
         this.ctx = canvas.getContext("2d")!;
-        this.commandManager=new CommandManager();
-        this.selectionManager=new SelectionManager(this.ctx,this.store)
-        this.renderer = new CanvasRenderer(this.ctx, this.selectionManager,this.store);
+        this.commandManager = new CommandManager();
+        this.selectionManager = new SelectionManager(this.ctx, this.store);
+        this.renderer = new CanvasRenderer(this.ctx, this.selectionManager, this.store);
         this.populateColAndRowPos();
-        this.cellSelector = new CellSelector(input, this.store, this.rowPos, this.columnPos,this.canvas);
+        this.cellSelector = new CellSelector(input, this.store, this.rowPos, this.columnPos, this.canvas);
         this.writeJsonToExcel("../output.json");
+        this.mouseEventListeners = new MouseEventListeners(this);
+        this.keyboardEventListener = new KeyboardEventListener(this);
         this.setupCanvas();
         this.attachEvents();
     }
 
-    private populateColAndRowPos() {
+    private populateColAndRowPos():void {
         let sum = DEFAULT_COLUMN_WIDTH;
         for (let i = 0; i <= TOTAL_COLS; i++) {
             this.columnPos.push(sum);
@@ -70,240 +94,31 @@ export class Grid {
         this.render();
     }
 
-    private render() {
-        this.renderer.drawGrid( this.rowPos,this.columnPos,this.scrollX,this.scrollY,);
-        this.renderer.drawCellData( this.scrollX,this.scrollY,this.rowPos,this.columnPos);
-        this.cellSelector.showSelectedCell(this.scrollX,this.scrollY,this.currentClick.row,this.currentClick.col)
-        this.cellSelector.showInputBox(-1,-1,this.scrollX,this.scrollY);
-        this.renderer.drawHeaders(this.scrollX,this.scrollY,this.rowPos,this.columnPos,);
-        this.selectionManager.drawHeaderSelection(this.scrollX,this.scrollY,this.columnPos,this.rowPos)
+    render() {
+        this.renderer.drawGrid(this.rowPos, this.columnPos, this.scrollX, this.scrollY);
+        this.renderer.drawCellData(this.scrollX, this.scrollY, this.rowPos, this.columnPos);
+        this.cellSelector.showSelectedCell(this.scrollX, this.scrollY, this.currentClick.row, this.currentClick.col);
+        this.cellSelector.showInputBox(-1, -1, this.scrollX, this.scrollY);
+        this.renderer.drawHeaders(this.scrollX, this.scrollY, this.rowPos, this.columnPos);
+        this.selectionManager.drawHeaderSelection(this.scrollX, this.scrollY, this.columnPos, this.rowPos);
     }
 
     private attachEvents() {
-        this.canvas.addEventListener("wheel", this.onWheel, { passive: false });
         window.addEventListener("resize", () => this.setupCanvas());
-        this.canvas.addEventListener("mousedown", this.onMouseDown);
-        window.addEventListener("mousemove", this.onMouseMove);
-        this.canvas.addEventListener("dblclick",this.onDblClick)
-        window.addEventListener("mouseup", this.onMouseUp);
-        document.addEventListener("keydown",this.onKeyDown)
+        this.mouseEventListeners.attach(this.canvas);
+        this.keyboardEventListener.attach();
     }
 
-    private onDblClick=(e:MouseEvent)=>{
-        this.cellSelector.showInputBox(this.currentClick.row,this.currentClick.col,this.scrollX,this.scrollY);
-        
-    }
-
-    
-
-    private onWheel = (e: WheelEvent) => {
-        e.preventDefault();
-        const maxScrollX = this.columnPos[this.columnPos.length - 1]! - window.innerWidth;
-        const maxScrollY = this.rowPos[this.rowPos.length - 1]! - window.innerHeight;
-        this.scrollX = Math.min(maxScrollX, Math.max(0, this.scrollX + e.deltaX));
-        this.scrollY = Math.min(maxScrollY, Math.max(0, this.scrollY + e.deltaY));
-        this.render();
-    };
-
-    private onMouseDown = (e: MouseEvent) => {
-        const x = e.offsetX + this.scrollX;
-        const y = e.offsetY + this.scrollY;
-        const closestColumn = getClosest(x, this.columnPos);
-        const closestRow = getClosest(y, this.rowPos);
-        const tolerance = 6;
-        this.cellSelector.clearInput(); 
-        this.cellSelector.showInputBox(-1, -1, this.scrollX, this.scrollY); 
-        this.cellSelector.showSelectedCell(this.scrollX, this.scrollY, closestRow, closestColumn);
-        this.currentClick = { row: closestRow, col: closestColumn };
-
-        if (closestColumn < TOTAL_COLS && Math.abs(this.columnPos[closestColumn + 1]! - x) <= tolerance) {
-            //check if distance between the mouse click and closestColumn to it is lesser than or equal to tolerance
-            //resize column and dont resize row
-            this.resizingColumn = closestColumn;
-            this.resizingRow = -1; 
-            this.resizeState.startX = e.clientX;
-            this.resizeState.initialSize = this.columnPos[closestColumn + 1]! - this.columnPos[closestColumn]!;
-            return;
-        }
-        else if (closestRow < TOTAL_ROWS && Math.abs(this.rowPos[closestRow + 1]! - y) <= tolerance) {
-            //check if distance between the mouse click and closestRow to it is lesser than or equal to tolerance
-            //resize row and dont resize column
-            this.resizingColumn = -1;
-            this.resizingRow = closestRow;
-            this.resizeState.startY = e.clientY;
-            this.resizeState.initialSize = this.rowPos[closestRow + 1]! - this.rowPos[closestRow]!;
-        }
-        
-            //check if y of mouse click is lesser than header height , identify if the mouse clicks inside the header
-            if(e.clientY < HEADER_ROW_HEIGHT){
-                this.selectionManager.selectedState={row1:-1,col1:closestColumn,row2:-1,col2:-1}
-            }
-            else if(e.clientX < HEADER_COLUMN_WIDTH){
-                this.selectionManager.selectedState={row1:closestRow,col1:-1,row2:-1,col2:-1}
-            }
-            else{ 
-                this.selectionManager.selectedState={row1:closestRow,col1:closestColumn,row2:closestRow,col2:closestColumn}
-            }
-            this.selectionManager.selecting=true
-        
-        this.render()
-
-    }
-
-private arrowKeyPressed(row: number, col: number) {
-    const cellLeft = this.columnPos[col]!;
-    const cellRight = this.columnPos[col + 1]!;
-
-    const cellTop = this.rowPos[row]!;
-    const cellBottom = this.rowPos[row + 1]!;
-
-    const viewportWidth = this.canvas.clientWidth;
-    const viewportHeight = this.canvas.clientHeight;
-
-    // Right
-    if (cellRight - this.scrollX > viewportWidth) {
-        this.scrollX = cellRight - viewportWidth;
-    }
-    // Left
-    if (cellLeft < this.scrollX + HEADER_COLUMN_WIDTH) {
-        this.scrollX = Math.max(0, cellLeft - HEADER_COLUMN_WIDTH);
-    }
-    // Down
-    if (cellBottom - this.scrollY > viewportHeight) {
-        this.scrollY = cellBottom - viewportHeight;
-    }
-    // Up
-    if (cellTop < this.scrollY + HEADER_ROW_HEIGHT) {
-        this.scrollY = Math.max(0, cellTop - HEADER_ROW_HEIGHT);
-    }
-
-    this.currentClick = { row, col };
-
-    this.selectionManager.selectedState = {
-        row1: row,
-        col1: col,
-        row2: row,
-        col2: col,
-    };
-
-    this.render();
-}
-    private onKeyDown=(e:KeyboardEvent)=>{
-        const {row,col}=this.currentClick;
-        const controlPressed:boolean=e.ctrlKey;
-        switch (e.key){
-            case "Enter":
-                this.commandManager.executeCommand(new EditCellCommand(row,col,this.cellSelector.getInputValue()!,this.store))
-                this.cellSelector.showInputBox(-1,-1,this.scrollX,this.scrollY);
-                this.render()
-                break;
-            case "ArrowUp":
-                if(row>0)this.arrowKeyPressed(row-1,col);
-                break;
-            case "ArrowDown":
-                if(row!=TOTAL_ROWS) this.arrowKeyPressed(row+1,col);
-                break;
-             case "ArrowLeft":
-                if(col>0) this.arrowKeyPressed(row,col-1)
-                break;
-             case "ArrowRight":
-                if(col<TOTAL_COLS) this.arrowKeyPressed(row,col+1)
-                break;
-             case "z":
-                if(controlPressed) {
-                this.commandManager.undo();
-                this.render()}
-                break;
-             case "y":
-                if(controlPressed){ this.commandManager.redo();
-                this.render()
-                }
-                break;
-            default:
-                break;
-            
-        }
-        
-        
-    }
-
-
-    private onMouseMove = (e: MouseEvent) => {
-        const x = e.clientX + this.scrollX;
-        const y = e.clientY + this.scrollY;
-        if (this.resizingColumn !== -1) {
-            this.canvas.style.cursor = "col-resize";
-            const totalMovedX = e.clientX - this.resizeState.startX;
-            let newWidth = this.resizeState.initialSize + totalMovedX;
-            this.resizeState.newWidth=newWidth
-            if (newWidth < 40) newWidth = 40; 
-            this.resizeCol(this.resizingColumn, newWidth);
-            this.resizingRow=-1
-            this.render();
-            return;
-        }
-
-        if (this.resizingRow !== -1) {
-            this.canvas.style.cursor = "row-resize";
-            const totalMovedY = e.clientY - this.resizeState.startY;
-            let newHeight = this.resizeState.initialSize + totalMovedY;
-            this.resizeState.newHeight=newHeight;
-            if (newHeight < 20) newHeight = 20; 
-            this.resizeRow(this.resizingRow, newHeight);
-            this.resizingColumn=-1;
-            this.render();
-            return;
-        }
-        else if(this.selectionManager.selecting){
-            const closestColumn = getClosest(x, this.columnPos);
-            const closestRow = getClosest(y, this.rowPos);
-            this.selectionManager.selectedState={col2:closestColumn,
-                row2:closestRow,
-                col1:this.selectionManager.selectedState.col1,
-                row1:this.selectionManager.selectedState.row1
-            }
-            this.render()
-        }
-        const closestColumn = getClosest(x, this.columnPos);
-        const closestRow = getClosest(y, this.rowPos);
-        const tolerance = 6;
-        if (closestColumn < TOTAL_COLS && Math.abs(this.columnPos[closestColumn + 1]! - x) <= tolerance) {
-            this.canvas.style.cursor = "col-resize";
-        } else if (closestRow < TOTAL_ROWS && Math.abs(this.rowPos[closestRow + 1]! - y) <= tolerance) {
-            this.canvas.style.cursor = "row-resize";
-            
-        } else {
-            this.canvas.style.cursor = "cell";
-        }
-    };
-
-    private onMouseUp = (e: MouseEvent) => {
-        this.selectionManager.selecting=false
-        if(this.resizingColumn!=-1 && this.resizingRow==-1){
-            const command=new ResizeCommand(this.columnPos,this.resizingColumn,this.resizeState.initialSize,this.resizeState.newWidth)
-            this.commandManager.executeCommand(command)
-        }
-        else if(this.resizingRow!=-1 && this.resizingColumn==-1){ 
-            const command=new ResizeCommand(this.rowPos,this.resizingRow,this.resizeState.initialSize,this.resizeState.newHeight)
-            this.commandManager.executeCommand(command)
-        }
-        this.resizingRow = -1;
-        this.resizingColumn = -1;
-        this.canvas.style.cursor = "cell";
-        this.render();
-        
-    };
-
-    private resizeCol = (col: number, newWidth: number) => {
+    resizeCol = (col: number, newWidth: number) => {
         const currentWidth = this.columnPos[col + 1]! - this.columnPos[col]!;
         const diff = newWidth - currentWidth;
         if (diff === 0) return;
         for (let i = col + 1; i < this.columnPos.length; i++) {
             this.columnPos[i]! += diff;
-        } 
+        }
     };
 
-    private resizeRow = (row: number, newHeight: number) => {
+    resizeRow = (row: number, newHeight: number) => {
         const currentHeight = this.rowPos[row + 1]! - this.rowPos[row]!;
         const diff = newHeight - currentHeight;
         if (diff === 0) return;
@@ -331,7 +146,6 @@ private arrowKeyPressed(row: number, col: number) {
             });
 
             this.render();
-
         } catch (error) {
             console.error("Failed to parse and write JSON data to Excel canvas:", error);
         }

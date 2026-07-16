@@ -1,5 +1,4 @@
-import type { CanvasRenderer } from "./CanvasRenderer.js";
-import { CellStore } from "./Cellstore.js";
+import { CellStore } from "../Store/Cellstore.js";
 interface ICommand{
     undo():void
     redo():void

@@ -1,4 +1,4 @@
-import { Formula } from "./Formula.js";
+import { Formula } from "../Formula.js";
 
 export class CellStore {
     private data = new Map<string, string>();

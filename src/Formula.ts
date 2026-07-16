@@ -16,7 +16,7 @@ export class Formula {
             if (!Number.isFinite(result)) {
                 return "#ERROR";
             }
-
+            //excel mult(sum(A1,A7)
             return result.toString();
         } catch {
             return "#ERROR";
