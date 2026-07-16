@@ -99,13 +99,7 @@ export class CellSelector {
         return this._input.value.trim();
     }
 
-    getParsedValue(): string {
-        const rawValue = this.getInputValue();
-        if (rawValue === "") return "";
-        
-        const parsedValue = Formula.evaluate(rawValue);
-        return parsedValue === "#ERRROR" ? rawValue : parsedValue;
-    }
+    
 
     clearInput() {
         this._input.value = "";
