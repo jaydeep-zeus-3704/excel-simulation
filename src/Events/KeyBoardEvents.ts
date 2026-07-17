@@ -58,9 +58,9 @@ export class KeyboardEventListener {
         switch (e.key) {
             case "Enter":
                 g.commandManager.executeCommand(
-                    new EditCellCommand(row, col, g.cellSelector.getInputValue()!, g.store)
+                    new EditCellCommand(row, col, g.editManager.inputValue, g.store)
                 );
-                g.cellSelector.showInputBox(-1, -1, g.scrollX, g.scrollY);
+                g.editManager.showInputBox(-1, -1, g.scrollX, g.scrollY);
                 g.render();
                 break;
             case "ArrowUp":

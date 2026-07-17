@@ -7,7 +7,7 @@ import {
 
 import { CellStore } from "./Store/Cellstore.js";
 import { CanvasRenderer } from "./Managers/CanvasRenderer.js";
-import { CellSelector } from "./Managers/EditManager.js";
+import { EditManager } from "./Managers/EditManager.js";
 import { SelectionManager } from "./Managers/SelectionManager.js";
 import { CommandManager } from "./Managers/CommandManager.js";
 import { MouseEventListeners } from "./Events/MouseEvents.js";
@@ -36,7 +36,7 @@ export class Grid {
     rowPos: number[] = [];
 
     // Input / selection
-    cellSelector: CellSelector;
+    editManager: EditManager;
     selectionManager: SelectionManager;
     currentClick: { row: number; col: number } = { row: -1, col: -1 };
 
@@ -64,7 +64,7 @@ export class Grid {
         this.selectionManager = new SelectionManager(this.ctx, this.store);
         this.renderer = new CanvasRenderer(this.ctx, this.selectionManager, this.store);
         this.populateColAndRowPos();
-        this.cellSelector = new CellSelector(input, this.store, this.rowPos, this.columnPos, this.canvas);
+        this.editManager = new EditManager(this,input, this.store, this.rowPos, this.columnPos, this.canvas);
         this.writeJsonToExcel("../output.json");
         this.mouseEventListeners = new MouseEventListeners(this);
         this.keyboardEventListener = new KeyboardEventListener(this);
@@ -97,8 +97,8 @@ export class Grid {
     render() {
         this.renderer.drawGrid(this.rowPos, this.columnPos, this.scrollX, this.scrollY);
         this.renderer.drawCellData(this.scrollX, this.scrollY, this.rowPos, this.columnPos);
-        this.cellSelector.showSelectedCell(this.scrollX, this.scrollY, this.currentClick.row, this.currentClick.col);
-        this.cellSelector.showInputBox(-1, -1, this.scrollX, this.scrollY);
+        this.editManager.showSelectedCell(this.scrollX, this.scrollY, this.currentClick.row, this.currentClick.col);
+        this.editManager.showInputBox(-1, -1, this.scrollX, this.scrollY);
         this.renderer.drawHeaders(this.scrollX, this.scrollY, this.rowPos, this.columnPos);
         this.selectionManager.drawHeaderSelection(this.scrollX, this.scrollY, this.columnPos, this.rowPos);
     }

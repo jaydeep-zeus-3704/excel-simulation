@@ -49,7 +49,6 @@ export class EditCellCommand implements ICommand {
     }
 
     undo(): void {
-        console.log(this.row,this.col,this.prevValue)
         this.cellStore.set(this.row,this.col,this.prevValue)
         
     }
