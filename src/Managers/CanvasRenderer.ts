@@ -42,6 +42,8 @@ export class CanvasRenderer {
             }
         }
         this.selectionManager.drawCellSelection(columnPos,rowPos,startRow,endRow,endCol,scrollX,scrollY)
+
+
     }
 
     drawCellData(scrollX: number, scrollY: number, rowPos: number[], colPos: number[]) {

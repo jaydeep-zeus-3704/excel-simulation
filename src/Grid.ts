@@ -12,7 +12,8 @@ import { SelectionManager } from "./Managers/SelectionManager.js";
 import { CommandManager } from "./Managers/CommandManager.js";
 import { MouseEventListeners } from "./Events/MouseEvents.js";
 import { KeyboardEventListener } from "./Events/KeyBoardEvents.js";
-
+import { EventManger } from "./Managers/EventManager.js";
+import { ViewPortManager } from "./Managers/ViewportManger.js";
 interface IResizeState{
      startX: number,
      startY: number,
@@ -57,13 +58,17 @@ export class Grid {
     // Event handlers
     private mouseEventListeners: MouseEventListeners;
     private keyboardEventListener: KeyboardEventListener;
+    public eventManager:EventManger;
+    public viewPortManager:ViewPortManager;
 
     constructor(public canvas: HTMLCanvasElement, input: HTMLInputElement) {
+        this.populateColAndRowPos();
         this.ctx = canvas.getContext("2d")!;
+        this.viewPortManager=new ViewPortManager()
+        this.eventManager=new EventManger(this)
         this.commandManager = new CommandManager();
         this.selectionManager = new SelectionManager(this.ctx, this.store);
         this.renderer = new CanvasRenderer(this.ctx, this.selectionManager, this.store);
-        this.populateColAndRowPos();
         this.editManager = new EditManager(this,input, this.store, this.rowPos, this.columnPos, this.canvas);
         this.writeJsonToExcel("../output.json");
         this.mouseEventListeners = new MouseEventListeners(this);
@@ -84,6 +89,24 @@ export class Grid {
             sum += DEFAULT_ROW_HEIGHT;
         }
     }
+
+    
+    public get rowPosition() : number[] {
+        return this.rowPos;
+    }
+
+    public set rowPosition(rowPos:number[]){
+        this.rowPos=rowPos;
+    }
+
+    public get columnPosition():number[]{
+        return this.columnPos;
+    }
+
+    public set columnPosition(colPos:number[]){
+        this.columnPos=colPos;
+    }
+    
 
     private setupCanvas() {
         const dpr = window.devicePixelRatio || 1;
@@ -108,24 +131,6 @@ export class Grid {
         this.mouseEventListeners.attach(this.canvas);
         this.keyboardEventListener.attach();
     }
-
-    resizeCol = (col: number, newWidth: number) => {
-        const currentWidth = this.columnPos[col + 1]! - this.columnPos[col]!;
-        const diff = newWidth - currentWidth;
-        if (diff === 0) return;
-        for (let i = col + 1; i < this.columnPos.length; i++) {
-            this.columnPos[i]! += diff;
-        }
-    };
-
-    resizeRow = (row: number, newHeight: number) => {
-        const currentHeight = this.rowPos[row + 1]! - this.rowPos[row]!;
-        const diff = newHeight - currentHeight;
-        if (diff === 0) return;
-        for (let i = row + 1; i < this.rowPos.length; i++) {
-            this.rowPos[i]! += diff;
-        }
-    };
 
     private async writeJsonToExcel(filePath: string) {
         try {
