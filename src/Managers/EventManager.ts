@@ -22,7 +22,4 @@ export class EventManger{
         viewPortManager.scrollY = Math.min(maxScrollY, Math.max(0, viewPortManager.scrollY + e.deltaY));
         this.grid.render();
     }
-
-
-
 }

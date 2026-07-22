@@ -14,6 +14,8 @@ import { MouseEventListeners } from "./Events/MouseEvents.js";
 import { KeyboardEventListener } from "./Events/KeyBoardEvents.js";
 import { EventManger } from "./Managers/EventManager.js";
 import { ViewPortManager } from "./Managers/ViewportManger.js";
+import { Summary } from "./Managers/SummaryManager.js";
+import { DataLoader } from "./Managers/DataLoader.js";
 interface IResizeState{
      startX: number,
      startY: number,
@@ -39,19 +41,8 @@ export class Grid {
     // Input / selection
     editManager: EditManager;
     selectionManager: SelectionManager;
+    summaryManager:Summary;
     currentClick: { row: number; col: number } = { row: -1, col: -1 };
-
-    // Resize state
-    resizingColumn: number = -1;
-    resizingRow: number = -1;
-    resizeState:IResizeState = {
-        startX: 0,
-        startY: 0,
-        initialSize: 0,
-        newWidth: 0,
-        newHeight: 0,
-    };
-
     // Commands
     commandManager: CommandManager;
 
@@ -60,21 +51,24 @@ export class Grid {
     private keyboardEventListener: KeyboardEventListener;
     public eventManager:EventManger;
     public viewPortManager:ViewPortManager;
+    private dataLoader:DataLoader;
 
     constructor(public canvas: HTMLCanvasElement, input: HTMLInputElement) {
         this.populateColAndRowPos();
+        this.dataLoader=new DataLoader("../output.json",this.store);
         this.ctx = canvas.getContext("2d")!;
         this.viewPortManager=new ViewPortManager()
         this.eventManager=new EventManger(this)
         this.commandManager = new CommandManager();
-        this.selectionManager = new SelectionManager(this.ctx, this.store);
+        this.selectionManager = new SelectionManager(this.ctx,this.viewPortManager);
+        this.summaryManager=new Summary(this.store)
         this.renderer = new CanvasRenderer(this.ctx, this.selectionManager, this.store);
         this.editManager = new EditManager(this,input, this.store, this.rowPos, this.columnPos, this.canvas);
-        this.writeJsonToExcel("../output.json");
         this.mouseEventListeners = new MouseEventListeners(this);
         this.keyboardEventListener = new KeyboardEventListener(this);
         this.setupCanvas();
         this.attachEvents();
+
     }
 
     private populateColAndRowPos():void {
@@ -108,7 +102,8 @@ export class Grid {
     }
     
 
-    private setupCanvas() {
+    private setupCanvas=async () => {
+        await this.dataLoader.loadData();
         const dpr = window.devicePixelRatio || 1;
         this.canvas.width = window.innerWidth * dpr;
         this.canvas.height = window.innerHeight * dpr;
@@ -123,7 +118,7 @@ export class Grid {
         this.editManager.showSelectedCell(this.scrollX, this.scrollY, this.currentClick.row, this.currentClick.col);
         this.editManager.showInputBox(-1, -1, this.scrollX, this.scrollY);
         this.renderer.drawHeaders(this.scrollX, this.scrollY, this.rowPos, this.columnPos);
-        this.selectionManager.drawHeaderSelection(this.scrollX, this.scrollY, this.columnPos, this.rowPos);
+        this.selectionManager.drawHeaderSelection(this.columnPos,this.rowPos)
     }
 
     private attachEvents() {
@@ -132,27 +127,4 @@ export class Grid {
         this.keyboardEventListener.attach();
     }
 
-    private async writeJsonToExcel(filePath: string) {
-        try {
-            const data = await fetch(filePath);
-            const response = await data.json();
-            if (!response || response.length === 0) return;
-            const keys = Object.keys(response[0]);
-
-            for (let i = 0; i < keys.length; i++) {
-                this.store.set(0, i, keys[i]!);
-            }
-
-            response.forEach((rowData: any, rowIndex: number) => {
-                keys.forEach((key, colIndex) => {
-                    const cellValue = rowData[key] !== undefined ? String(rowData[key]) : "";
-                    this.store.set(rowIndex + 1, colIndex, cellValue);
-                });
-            });
-
-            this.render();
-        } catch (error) {
-            console.error("Failed to parse and write JSON data to Excel canvas:", error);
-        }
-    }
 }

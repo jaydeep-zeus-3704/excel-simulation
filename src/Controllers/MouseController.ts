@@ -32,13 +32,13 @@ export class MouseController{
 
     attachEvents=()=>{
         this.grid.canvas.addEventListener("pointerdown",this.onPointerDown)
-        window.addEventListener("pointermove",this.onPointerMove)
+        this.grid.canvas.addEventListener("pointermove",this.onPointerMove)
         this.grid.canvas.addEventListener("pointerup",this.onPointerUp)
     }
 
     detachEvents=()=>{
         this.grid.canvas.removeEventListener("pointerdown",this.onPointerDown)
-        window.removeEventListener("pointermove",this.onPointerMove)
+        this.grid.canvas.removeEventListener("pointermove",this.onPointerMove)
         this.grid.canvas.removeEventListener("pointerup",this.onPointerUp)
     }
 
@@ -51,7 +51,6 @@ export class MouseController{
     }
 
     onPointerMove=(e:PointerEvent)=>{
-        this.grid.canvas.style.cursor="cell"
         const viewPortManager=this.grid.viewPortManager
         viewPortManager.updateCoordinates(e)
         this.handlers[this.activeHandlerIndex]?.pointermove()
@@ -61,8 +60,6 @@ export class MouseController{
         const viewPortManager=this.grid.viewPortManager
         viewPortManager.updateCoordinates(e)
         this.handlers[this.activeHandlerIndex]?.pointerup()
+        this.activeHandlerIndex=-1;
     }
-
-
-
 }

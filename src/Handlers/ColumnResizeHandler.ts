@@ -31,7 +31,7 @@ export class ColumnResizeHandler {
         const isNear = this.checkIfNearColumn();
         const localY=this.viewPortManager.localY
         this.grid.canvas.style.cursor = isNear && localY<HEADER_ROW_HEIGHT ? "col-resize" : "cell";
-        return isNear;
+        return isNear && localY<HEADER_ROW_HEIGHT;
     };
 
     pointerdown = () => {
@@ -40,8 +40,6 @@ export class ColumnResizeHandler {
         const x= this.viewPortManager.x;
         const columnPos = this.grid.columnPos;
         const columnToResize = getClosest(x, columnPos);
-        if (columnToResize < 0 || columnToResize >= columnPos.length - 1) return;
-
         this.targetCol = columnToResize;
         this.resizeState.startX = x;
         this.resizeState.originalWidth =this.viewPortManager.getColumnWidth(columnPos,this.targetCol);

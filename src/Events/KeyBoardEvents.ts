@@ -14,41 +14,37 @@ export class KeyboardEventListener {
     }
 
     private arrowKeyPressed(row: number, col: number) {
-        const g = this.grid;
-        const cellLeft = g.columnPos[col]!;
-        const cellRight = g.columnPos[col + 1]!;
-        const cellTop = g.rowPos[row]!;
-        const cellBottom = g.rowPos[row + 1]!;
-        const viewportWidth = g.canvas.clientWidth;
-        const viewportHeight = g.canvas.clientHeight;
-        // Right
-        if (cellRight - g.scrollX > viewportWidth) {
-            g.scrollX = cellRight - viewportWidth;
-        }
-        // Left
-        if (cellLeft < g.scrollX + HEADER_COLUMN_WIDTH) {
-            g.scrollX = Math.max(0, cellLeft - HEADER_COLUMN_WIDTH);
-        }
-        // Down
-        if (cellBottom - g.scrollY > viewportHeight) {
-            g.scrollY = cellBottom - viewportHeight;
-        }
-        // Up
-        if (cellTop < g.scrollY + HEADER_ROW_HEIGHT) {
-            g.scrollY = Math.max(0, cellTop - HEADER_ROW_HEIGHT);
-        }
+    const g = this.grid;
+    const cellLeft = g.columnPos[col]!;
+    const cellRight = g.columnPos[col + 1]!;
+    const cellTop = g.rowPos[row]!;
+    const cellBottom = g.rowPos[row + 1]!;
+    const viewportWidth = g.canvas.clientWidth;
+    const viewportHeight = g.canvas.clientHeight;
 
-        g.currentClick = { row, col };
-
-        g.selectionManager.selectedState = {
-            row1: row,
-            col1: col,
-            row2: row,
-            col2: col,
-        };
-
-        g.render();
+    // Adjust scroll to keep cell visible
+    if (cellRight - g.scrollX > viewportWidth) {
+        g.scrollX = cellRight - viewportWidth;
     }
+    if (cellLeft < g.scrollX + HEADER_COLUMN_WIDTH) {
+        g.scrollX = Math.max(0, cellLeft - HEADER_COLUMN_WIDTH);
+    }
+    if (cellBottom - g.scrollY > viewportHeight) {
+        g.scrollY = cellBottom - viewportHeight;
+    }
+    if (cellTop < g.scrollY + HEADER_ROW_HEIGHT) {
+        g.scrollY = Math.max(0, cellTop - HEADER_ROW_HEIGHT);
+    }
+
+    // Update selection
+    g.currentClick = { row, col };
+    g.selectionManager.selectedState = { row1: row, col1: col, row2: row, col2: col };
+
+    // Recompute summary and render
+    this.grid.summaryManager.displaySummary(row, col, row, col);
+    g.render();
+}
+
 
     onKeyDown = (e: KeyboardEvent) => {
         const g = this.grid;

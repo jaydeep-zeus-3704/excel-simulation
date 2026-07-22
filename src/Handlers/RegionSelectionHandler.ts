@@ -30,7 +30,9 @@ export class RegionSelectionHandler implements IMouseHandler{
           const col=getClosest(x,columnPos); 
           const row=getClosest(y,rowPos);
           this.selectionManager.selecting=true;
-          this.selectionManager.selectedState={col1:col,row1:row,col2:-1,row2:-1}           
+          this.selectionManager.selectedState={col1:col,row1:row,col2:col,row2:row}  
+         this.grid.summaryManager.displaySummary(row,col,row,col)
+ 
     }
 
     pointermove=()=>{
@@ -44,9 +46,11 @@ export class RegionSelectionHandler implements IMouseHandler{
         const prevRow=this.selectionManager.selectedState.row1;
         const prevCol=this.selectionManager.selectedState.col1;
         this.selectionManager.selectedState={col1:prevCol,row1:prevRow,col2:col,row2:row}
+        this.grid.summaryManager.displaySummary(prevRow,prevCol,row,col)
         this.grid.render()
     }
     pointerup=()=>{
         this.selectionManager.selecting=false;
+
     }
 }

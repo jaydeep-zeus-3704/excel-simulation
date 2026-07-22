@@ -1,72 +1,71 @@
+import type { CellStore } from "../Store/Cellstore.js";
 
 export class Summary {
-    private count: number = 0;
-    private sum: number = 0;
-    private min: number = 0;
-    private max:number=0;
-    private avg: number = 0;
-    private numbers: number[] = [];
+    private count = 0;
+    private sum = 0;
+    private min = Number.MAX_SAFE_INTEGER;
+    private max = Number.MIN_SAFE_INTEGER;
+    private avg = 0;
 
-    setNumbers(numbers:number[]){
-        this.numbers=numbers;
-        this.count=this.numbers.length;
-    }
+    constructor(private store: CellStore) {}
 
+    private computeSummary(row1: number, col1: number, row2: number, col2: number) {
+        // normalize bounds
+        const startRow = Math.min(row1, row2);
+        const endRow   = Math.max(row1, row2);
+        const startCol = Math.min(col1, col2);
+        const endCol   = Math.max(col1, col2);
 
+        this.count = 0;
+        this.sum = 0;
+        this.min = Number.MAX_SAFE_INTEGER;
+        this.max = Number.MIN_SAFE_INTEGER;
 
-    getSum() {
-        this.sum=0;
-        this.avg=0;
-        for(let i=0;i<this.numbers.length;i++) this.sum+=this.numbers[i]!;
-        this.avg=(this.sum/this.numbers.length);
-        
-    }
+        for (let r = startRow; r <= endRow; r++) {
+            for (let c = startCol; c <= endCol; c++) {
+                const raw = this.store.get(r, c);
+                if (raw == null) continue;
 
-    findMin(){
-        this.min=Number.MAX_SAFE_INTEGER;
-        let minimum=Number.MAX_SAFE_INTEGER;
-        for(let i=0;i<this.numbers.length;i++){
-            minimum=Math.min(minimum,this.numbers[i]!);
+                const value = Number(raw);
+                if (isNaN(value)) continue;
+
+                this.count++;
+                this.sum += value;
+                if (value < this.min) this.min = value;
+                if (value > this.max) this.max = value;
+            }
         }
-        if(minimum==Number.MAX_SAFE_INTEGER){
-            this.min=0;
+
+        this.avg = this.count > 0 ? this.sum / this.count : 0;
+
+        if (this.count === 0) {
+            this.min = 0;
+            this.max = 0;
         }
-        else this.min=minimum;
-        
     }
 
-    findMax(){
-        this.max=0
-        let maximum=0;
-        for(let i=0;i<this.numbers.length;i++){
-            maximum=Math.max(maximum,this.numbers[i]!)
-        }
-        this.max=maximum;
+    displaySummary(row1: number, col1: number, row2: number, col2: number) {
+        console.log("Summary called");
+        this.computeSummary(row1, col1, row2, col2);
+
+        const summaryBox = document.getElementById("summary")!;
+        summaryBox.innerHTML = `
+            <span id="count">Count: ${this.count}</span>
+            <span id="min">Minimum: ${this.count === 0 ? 'NA' : this.min}</span>
+            <span id="max">Maximum: ${this.count === 0 ? 'NA' : this.max}</span>
+            <span id="avg">Avg: ${this.count === 0 ? 'NA' : this.avg.toPrecision(6)}</span>
+            <span id="sum">Sum: ${this.sum}</span>
+        `;
     }
 
-    displaySummary(numbers:number[]){
-        this.setNumbers(numbers);
-        const {count,min,max,sum,avg}=this.getSummary();
-        const summaryBox=document.getElementById("summary")!
-        summaryBox.innerHTML=`<span id="count">Count: ${count}</span>
-        <span id="min">Minimum: ${min==Number.MIN_VALUE ? 'NA' : min}</span>
-        <span id="max">Maximum: ${max==Number.MAX_SAFE_INTEGER ? 'NA' : max}</span>
-        <span id="avg">Avg: ${avg.toPrecision(6)}</span>
-        <span id="max">Sum: ${sum}</span>`
-    }
-
-    getSummary(){
-        
-        this.findMax();
-        this.findMin();
-        this.getSum();
-        return{
-            count:this.count,
-            min:this.min,
-            max:this.max,
-            sum:this.sum,
-            avg:this.avg
-        }
+    getSummary(row1: number, col1: number, row2: number, col2: number) {
+        this.computeSummary(row1, col1, row2, col2);
+        return {
+            count: this.count,
+            min: this.min,
+            max: this.max,
+            sum: this.sum,
+            avg: this.avg
+        };
     }
 }
-

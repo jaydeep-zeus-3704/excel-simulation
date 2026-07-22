@@ -24,7 +24,6 @@ export class RowResizeHandler {
         const rowPos = this.grid.rowPos;
         const closestRow = getClosest(y, rowPos);
         if (closestRow < 0 || closestRow >= rowPos.length - 1) return false;
-
         return Math.abs(rowPos[closestRow + 1]! - y) <= TOLERANCE;
     };
 
@@ -32,7 +31,7 @@ export class RowResizeHandler {
         const isNear = this.checkIfNearRow();
         const localX=this.viewPortManager.localX
         this.grid.canvas.style.cursor = (isNear && localX < HEADER_COLUMN_WIDTH) ? "row-resize" : "cell";
-        return isNear;
+        return isNear && localX<HEADER_COLUMN_WIDTH;
     };
 
     pointerdown = () => {

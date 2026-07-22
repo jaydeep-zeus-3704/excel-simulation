@@ -41,9 +41,7 @@ export class CanvasRenderer {
                 CanvasHelpers.drawAndStrokeRect(this.ctx,"#ffffff",x, y,"#bcbcbc",1 ,width, height);
             }
         }
-        this.selectionManager.drawCellSelection(columnPos,rowPos,startRow,endRow,endCol,scrollX,scrollY)
-
-
+        this.selectionManager.drawCellSelection(columnPos,rowPos);
     }
 
     drawCellData(scrollX: number, scrollY: number, rowPos: number[], colPos: number[]) {
@@ -109,7 +107,7 @@ export class CanvasRenderer {
          this.ctx.beginPath()
          this.ctx.fillStyle = fillStyle;
          this.ctx.font = "400 14px sans-serif";
-         this.ctx.textBaseline = "middle"; // <- important
+         this.ctx.textBaseline = "middle"; 
          this.ctx.textAlign = textAlign ? textAlign : "center";
          this.ctx.fillText(value, x, y);
          this.ctx.closePath()

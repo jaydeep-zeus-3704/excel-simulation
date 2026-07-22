@@ -1,9 +1,5 @@
 import { CellStore } from "../Store/Cellstore.js";
-interface ICommand{
-    undo():void
-    redo():void
-    execute():void
-}
+import type { ICommand } from "../Interface/ICommand.js";
 
 
 export class CommandManager {
@@ -67,7 +63,6 @@ export class ResizeCommand implements ICommand {
 
     execute(): void {
     }
-
     undo(): void {
         this.applySizeChange(this.oldSize);
     }
@@ -76,7 +71,6 @@ export class ResizeCommand implements ICommand {
         this.applySizeChange(this.resizedSize);
         
     }
-
     private applySizeChange(targetSize: number): void {
         if(targetSize<=0) return;
         const currentSize = this.pos[this.k + 1]! - this.pos[this.k]!;

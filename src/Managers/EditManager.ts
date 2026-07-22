@@ -2,7 +2,6 @@ import {
     HEADER_COLUMN_WIDTH,
     HEADER_ROW_HEIGHT
 } from "../Constants.js";
-import { CanvasHelpers } from "../Helpers/CanvasHelpers.js";
 import { CellStore } from "../Store/Cellstore.js";
 import { Grid } from "../Grid.js";
 import { EditCellCommand } from "./CommandManager.js";
@@ -56,7 +55,7 @@ export class EditManager {
         const width = this.columnPositions[col + 1]! - this.columnPositions[col]!;
         const height = this.rowPositions[row + 1]! - this.rowPositions[row]!;
         this.ctx.beginPath();
-        this.ctx.fillStyle = "#b6d3c3";
+        this.ctx.fillStyle = "#ffffff";
         this.ctx.fillRect(x, y, width, height);
         this.ctx.lineWidth=2
         this.ctx.strokeStyle = "#284314";
